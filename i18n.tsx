@@ -1,0 +1,458 @@
+
+import React, { createContext, useState, useContext, ReactNode } from 'react';
+
+type Language = 'en' | 'zh';
+
+const translations = {
+  en: {
+    // Sidebar
+    'nav.dashboard': 'Dashboard',
+    'nav.assets': 'Assets Library',
+    'nav.channels': 'Channel Connectors',
+    'nav.automation': 'Automation Rules',
+    'nav.settings': 'System Settings',
+    'nav.mobile_header': 'EKH Mobile',
+    'nav.user_settings': 'Settings & Account',
+
+    // Dashboard
+    'dash.title': 'Knowledge Intelligence',
+    'dash.subtitle': 'Real-time overview of knowledge base performance and RAG metrics.',
+    'dash.stat.retrievals': 'Total AI Retrievals',
+    'dash.stat.relevance': 'RAG Relevance Score',
+    'dash.stat.assets': 'Active Knowledge Assets',
+    'dash.stat.latency': 'Avg. Response Latency',
+    'dash.chart.volume': 'AI Retrieval Volume & Latency',
+    'dash.chart.channels': 'Top Consumer Channels',
+    'dash.table.title': 'Most Cited Knowledge Assets (RAG Hits)',
+    'dash.table.col.name': 'Document Name',
+    'dash.table.col.citations': 'Total Citations',
+    'dash.table.col.relevance': 'Avg. Relevance',
+    'dash.table.col.trend': 'Trend',
+
+    // Assets Library
+    'assets.title': 'Knowledge Assets',
+    'assets.subtitle': 'Centralized repository for all enterprise documentation.',
+    'assets.btn.sync': 'Fetch Source',
+    'assets.btn.new_folder': 'New Folder',
+    'assets.btn.import': 'Import File',
+    'assets.search.placeholder': 'Search in current folder...',
+    'assets.empty.title': 'No files found',
+    'assets.empty.desc': 'Select a folder on the left or import a new file.',
+    'assets.col.name': 'Name',
+    'assets.col.owner': 'Owner',
+    'assets.col.updated': 'Updated',
+    'assets.col.size': 'Size',
+    'assets.col.status': 'Status',
+    'assets.col.actions': 'Actions',
+    'assets.modal.upload.title': 'Import Knowledge Asset',
+    'assets.modal.upload.drag': 'Drag and drop files here',
+    'assets.modal.upload.browse': 'or click to browse',
+    'assets.modal.folder.title': 'Create New Folder',
+    'assets.label.folder_name': 'Folder Name',
+    'assets.root': 'Root',
+    'assets.knowledge_bases': 'Knowledge Bases',
+
+    // Channel Connectors
+    'channel.title': 'Channel Connectors',
+    'channel.subtitle': 'Manage external integrations for data ingestion and distribution.',
+    'channel.btn.add': 'Add Integration',
+    'channel.tab.outbound': 'Distribution Channels (Output)',
+    'channel.tab.inbound': 'Input Sources (Ingestion)',
+    'channel.card.last_sync': 'Last Sync',
+    'channel.card.last_fetch': 'Last Fetch',
+    'channel.card.active': 'Active',
+    'channel.card.disabled': 'Disabled',
+    'channel.wizard.title': 'Integration Wizard',
+    'channel.wizard.step1': 'Select Type',
+    'channel.wizard.step2': 'Connection',
+    'channel.wizard.step3': 'Mapping',
+    'channel.wizard.step4': 'Complete',
+    
+    // Automation
+    'auto.title': 'Automation Rules',
+    'auto.subtitle': 'Define when and how knowledge assets are synchronized.',
+    'auto.btn.create': 'Create Task',
+    'auto.logs.title': 'System Logs (Live)',
+    'auto.col.task': 'Task',
+    'auto.col.status': 'Status',
+    'auto.col.last_run': 'Last Run',
+
+    // Document Detail
+    'doc.back': 'Back',
+    'doc.created_by': 'Created by',
+    'doc.download': 'Download',
+    'doc.upload_version': 'Upload New Version',
+    'doc.preview': 'Previewing',
+    'doc.readonly': 'Read-only mode',
+    'doc.simulation': 'This is a simulation of the file content preview.',
+    'doc.showing_ver': 'Showing version',
+    'doc.channel_dist': 'Channel Distribution',
+    'doc.current': 'Current',
+    'doc.version_history': 'Version History',
+    'doc.rollback': 'Rollback',
+
+    // Settings
+    'settings.title': 'Personal Center',
+    'settings.subtitle': 'Manage your account settings and preferences.',
+    'settings.tab.profile': 'My Profile',
+    'settings.tab.preferences': 'Preferences',
+    'settings.tab.security': 'Security',
+    'settings.lang.label': 'Interface Language',
+    'settings.lang.desc': 'Select your preferred language for the UI.',
+    'settings.btn.save': 'Save Changes',
+    'settings.profile.public': 'Public Profile',
+    'settings.profile.desc': 'This information will be displayed to other users.',
+    'settings.label.fullname': 'Full Name',
+    'settings.label.job': 'Job Title',
+    'settings.label.bio': 'Bio',
+
+    // Common
+    'common.cancel': 'Cancel',
+    'common.confirm': 'Confirm',
+    'common.create': 'Create',
+    'common.back': 'Back',
+    'common.next': 'Next',
+    'common.finish': 'Finish',
+    'common.edit': 'Edit',
+    'common.delete': 'Delete',
+    'common.save': 'Save',
+    'common.test': 'Test Connection',
+    'common.loading': 'Loading...',
+    'common.success': 'Success',
+    'common.error': 'Error',
+    'common.warning': 'Warning',
+    'common.info': 'Info',
+
+    // Yuque Integration
+    'yuque.provider': 'Yuque Integration',
+    'yuque.config.title': 'Yuque Source Configuration',
+    'yuque.config.edit_title': 'Edit Yuque Configuration',
+    'yuque.config.name': 'Configuration Name',
+    'yuque.config.name_placeholder': 'e.g., Product Team Knowledge Base',
+    'yuque.config.base_url': 'Enterprise Domain',
+    'yuque.config.base_url_placeholder': 'e.g., https://company.yuque.com',
+    'yuque.config.group_login': 'Team Login',
+    'yuque.config.group_login_placeholder': 'e.g., team-name',
+    'yuque.config.book_slug': 'Repository Slug',
+    'yuque.config.book_slug_placeholder': 'e.g., knowledge-base',
+    'yuque.config.token': 'Access Token',
+    'yuque.config.token_placeholder': 'Enter your Yuque API token',
+    'yuque.config.status': 'Status',
+    'yuque.config.last_sync': 'Last Sync',
+    'yuque.config.never': 'Never',
+    'yuque.config.delete_confirm': 'Are you sure you want to delete this Yuque configuration? Exported documents will be preserved but marked as disconnected.',
+    'yuque.config.validation_success': 'Connection validated successfully!',
+    'yuque.config.validation_failed': 'Connection validation failed',
+    'yuque.config.saved': 'Configuration saved successfully',
+    'yuque.config.updated': 'Configuration updated successfully',
+    'yuque.config.deleted': 'Configuration deleted successfully',
+
+    // Yuque Errors
+    'yuque.error.required_fields': 'Please fill in all required fields',
+    'yuque.error.invalid_url': 'Invalid enterprise domain URL',
+    'yuque.error.invalid_token': 'Invalid or expired access token. Please check your token.',
+    'yuque.error.no_permission': 'No permission to access this repository. Please check User-Agent or permissions.',
+    'yuque.error.rate_limit': 'API rate limit exceeded. Retrying...',
+    'yuque.error.network_timeout': 'Network request timeout. Retrying...',
+    'yuque.error.not_found': 'Repository not found. Please check team login and repository slug.',
+    'yuque.error.server_error': 'Yuque server error. Please try again later.',
+    'yuque.error.unknown': 'Unknown error occurred',
+    'yuque.error.storage_full': 'Storage space insufficient. Please clean up old data.',
+
+    // Export Tasks
+    'export.task.title': 'Export Tasks',
+    'export.task.create': 'Create Export Task',
+    'export.task.edit': 'Edit Export Task',
+    'export.task.name': 'Task Name',
+    'export.task.name_placeholder': 'e.g., Daily Sync Product Docs',
+    'export.task.source': 'Yuque Source',
+    'export.task.source_placeholder': 'Select a Yuque source',
+    'export.task.trigger_type': 'Trigger Type',
+    'export.task.trigger_manual': 'Manual Trigger',
+    'export.task.trigger_schedule': 'Scheduled Task',
+    'export.task.schedule_config': 'Schedule Configuration',
+    'export.task.schedule_hourly': 'Every Hour',
+    'export.task.schedule_daily': 'Daily',
+    'export.task.schedule_weekly': 'Weekly',
+    'export.task.schedule_time': 'Execution Time',
+    'export.task.run_now': 'Run Now',
+    'export.task.delete_confirm': 'Are you sure you want to delete this export task?',
+    'export.task.created': 'Export task created successfully',
+    'export.task.deleted': 'Export task deleted successfully',
+    'export.task.started': 'Export task started',
+    'export.task.no_source': 'No Yuque source configured. Please add a source first.',
+
+    // Task Status
+    'export.status.idle': 'Idle',
+    'export.status.running': 'Running',
+    'export.status.success': 'Success',
+    'export.status.error': 'Error',
+    'export.status.completed': 'Completed',
+    'export.status.failed': 'Failed',
+
+    // Export Logs
+    'export.log.started': 'Export task started',
+    'export.log.fetching_toc': 'Fetching table of contents...',
+    'export.log.toc_success': 'Successfully fetched TOC with {count} nodes',
+    'export.log.toc_failed': 'Failed to fetch TOC: {error}',
+    'export.log.creating_folders': 'Creating folder structure...',
+    'export.log.folders_created': 'Created {count} folders',
+    'export.log.exporting_docs': 'Exporting documents...',
+    'export.log.doc_success': 'Successfully exported: {title} (ID: {id})',
+    'export.log.doc_failed': 'Failed to export document {id}: {error}',
+    'export.log.downloading_asset': 'Downloading asset: {url}',
+    'export.log.asset_success': 'Successfully downloaded asset',
+    'export.log.asset_failed': 'Failed to download asset: {error}',
+    'export.log.completed': 'Export completed: {success} succeeded, {failed} failed',
+    'export.log.stopped': 'Export task stopped due to error',
+    'export.log.retrying': 'Retrying request (attempt {attempt}/{max})...',
+
+    // Document Source
+    'doc.source.yuque': 'Yuque',
+    'doc.source.disconnected': 'Disconnected',
+    'doc.source.info': 'Source: {source}',
+    'doc.metadata.yuque_id': 'Yuque Document ID',
+    'doc.metadata.yuque_slug': 'Document Slug',
+    'doc.metadata.format': 'Format',
+  },
+  zh: {
+    // Sidebar
+    'nav.dashboard': '仪表盘',
+    'nav.assets': '知识库管理',
+    'nav.channels': '渠道连接器',
+    'nav.automation': '自动化任务',
+    'nav.settings': '系统设置',
+    'nav.mobile_header': 'EKH 移动端',
+    'nav.user_settings': '个人设置与账户',
+
+    // Dashboard
+    'dash.title': '知识效能看板',
+    'dash.subtitle': '知识库性能与 RAG 检索指标实时概览',
+    'dash.stat.retrievals': 'AI 调用总量',
+    'dash.stat.relevance': 'RAG 准确率',
+    'dash.stat.assets': '活跃知识资产',
+    'dash.stat.latency': '平均响应延迟',
+    'dash.chart.volume': 'AI 检索量与延迟趋势',
+    'dash.chart.channels': '热门消费渠道',
+    'dash.table.title': '高频引用文档 (RAG Hits)',
+    'dash.table.col.name': '文档名称',
+    'dash.table.col.citations': '引用次数',
+    'dash.table.col.relevance': '平均相关度',
+    'dash.table.col.trend': '趋势',
+
+    // Assets Library
+    'assets.title': '知识资产库',
+    'assets.subtitle': '企业文档的统一存储与管理中心',
+    'assets.btn.sync': '同步源文件',
+    'assets.btn.new_folder': '新建文件夹',
+    'assets.btn.import': '导入文件',
+    'assets.search.placeholder': '在当前文件夹搜索...',
+    'assets.empty.title': '暂无文件',
+    'assets.empty.desc': '请在左侧选择文件夹或导入新文件',
+    'assets.col.name': '名称',
+    'assets.col.owner': '责任人',
+    'assets.col.updated': '更新时间',
+    'assets.col.size': '大小',
+    'assets.col.status': '状态',
+    'assets.col.actions': '操作',
+    'assets.modal.upload.title': '导入知识资产',
+    'assets.modal.upload.drag': '拖拽文件到此处',
+    'assets.modal.upload.browse': '或点击浏览文件',
+    'assets.modal.folder.title': '新建文件夹',
+    'assets.label.folder_name': '文件夹名称',
+    'assets.root': '根目录',
+    'assets.knowledge_bases': '知识库列表',
+
+    // Channel Connectors
+    'channel.title': '渠道连接器',
+    'channel.subtitle': '管理数据接入与分发的外部集成',
+    'channel.btn.add': '添加集成',
+    'channel.tab.outbound': '分发渠道 (输出)',
+    'channel.tab.inbound': '数据源 (接入)',
+    'channel.card.last_sync': '上次同步',
+    'channel.card.last_fetch': '上次拉取',
+    'channel.card.active': '已启用',
+    'channel.card.disabled': '已禁用',
+    'channel.wizard.title': '集成向导',
+    'channel.wizard.step1': '选择类型',
+    'channel.wizard.step2': '连接配置',
+    'channel.wizard.step3': '字段映射',
+    'channel.wizard.step4': '完成配置',
+
+    // Automation
+    'auto.title': '自动化规则',
+    'auto.subtitle': '定义知识资产的同步策略与时机',
+    'auto.btn.create': '创建任务',
+    'auto.logs.title': '系统日志 (实时)',
+    'auto.col.task': '任务名称',
+    'auto.col.status': '状态',
+    'auto.col.last_run': '上次运行',
+
+    // Document Detail
+    'doc.back': '返回',
+    'doc.created_by': '创建者',
+    'doc.download': '下载',
+    'doc.upload_version': '上传新版本',
+    'doc.preview': '预览中',
+    'doc.readonly': '只读模式',
+    'doc.simulation': '这是文件内容预览的模拟显示。',
+    'doc.showing_ver': '当前显示版本',
+    'doc.channel_dist': '渠道分发状态',
+    'doc.current': '当前',
+    'doc.version_history': '版本历史',
+    'doc.rollback': '回滚',
+
+    // Settings
+    'settings.title': '个人中心',
+    'settings.subtitle': '管理您的账户设置与偏好',
+    'settings.tab.profile': '我的资料',
+    'settings.tab.preferences': '偏好设置',
+    'settings.tab.security': '安全设置',
+    'settings.lang.label': '界面语言',
+    'settings.lang.desc': '选择您偏好的系统显示语言',
+    'settings.btn.save': '保存更改',
+    'settings.profile.public': '公开资料',
+    'settings.profile.desc': '此信息将向其他用户公开显示。',
+    'settings.label.fullname': '全名',
+    'settings.label.job': '职位',
+    'settings.label.bio': '个人简介',
+
+    // Common
+    'common.cancel': '取消',
+    'common.confirm': '确认',
+    'common.create': '创建',
+    'common.back': '返回',
+    'common.next': '下一步',
+    'common.finish': '完成',
+    'common.edit': '编辑',
+    'common.delete': '删除',
+    'common.save': '保存',
+    'common.test': '测试连接',
+    'common.loading': '加载中...',
+    'common.success': '成功',
+    'common.error': '错误',
+    'common.warning': '警告',
+    'common.info': '信息',
+
+    // Yuque Integration
+    'yuque.provider': '语雀集成',
+    'yuque.config.title': '语雀源配置',
+    'yuque.config.edit_title': '编辑语雀配置',
+    'yuque.config.name': '配置名称',
+    'yuque.config.name_placeholder': '例如：产品团队知识库',
+    'yuque.config.base_url': '企业域名',
+    'yuque.config.base_url_placeholder': '例如：https://company.yuque.com',
+    'yuque.config.group_login': '团队 Login',
+    'yuque.config.group_login_placeholder': '例如：team-name',
+    'yuque.config.book_slug': '知识库 Slug',
+    'yuque.config.book_slug_placeholder': '例如：knowledge-base',
+    'yuque.config.token': '访问令牌',
+    'yuque.config.token_placeholder': '请输入语雀 API 令牌',
+    'yuque.config.status': '状态',
+    'yuque.config.last_sync': '上次同步',
+    'yuque.config.never': '从未',
+    'yuque.config.delete_confirm': '确定要删除此语雀配置吗？已导出的文档将被保留但标记为已断开连接。',
+    'yuque.config.validation_success': '连接验证成功！',
+    'yuque.config.validation_failed': '连接验证失败',
+    'yuque.config.saved': '配置保存成功',
+    'yuque.config.updated': '配置更新成功',
+    'yuque.config.deleted': '配置删除成功',
+
+    // Yuque Errors
+    'yuque.error.required_fields': '请填写所有必填字段',
+    'yuque.error.invalid_url': '企业域名 URL 格式无效',
+    'yuque.error.invalid_token': '访问令牌无效或已过期，请检查您的令牌。',
+    'yuque.error.no_permission': '无权限访问此知识库，请检查 User-Agent 或权限配置。',
+    'yuque.error.rate_limit': 'API 限流，正在重试...',
+    'yuque.error.network_timeout': '网络请求超时，正在重试...',
+    'yuque.error.not_found': '知识库未找到，请检查团队 Login 和知识库 Slug。',
+    'yuque.error.server_error': '语雀服务器错误，请稍后重试。',
+    'yuque.error.unknown': '发生未知错误',
+    'yuque.error.storage_full': '存储空间不足，请清理旧数据。',
+
+    // Export Tasks
+    'export.task.title': '导出任务',
+    'export.task.create': '创建导出任务',
+    'export.task.edit': '编辑导出任务',
+    'export.task.name': '任务名称',
+    'export.task.name_placeholder': '例如：每日同步产品文档',
+    'export.task.source': '语雀源',
+    'export.task.source_placeholder': '选择一个语雀源',
+    'export.task.trigger_type': '触发类型',
+    'export.task.trigger_manual': '手动触发',
+    'export.task.trigger_schedule': '定时任务',
+    'export.task.schedule_config': '定时配置',
+    'export.task.schedule_hourly': '每小时',
+    'export.task.schedule_daily': '每天',
+    'export.task.schedule_weekly': '每周',
+    'export.task.schedule_time': '执行时间',
+    'export.task.run_now': '立即执行',
+    'export.task.delete_confirm': '确定要删除此导出任务吗？',
+    'export.task.created': '导出任务创建成功',
+    'export.task.deleted': '导出任务删除成功',
+    'export.task.started': '导出任务已启动',
+    'export.task.no_source': '未配置语雀源，请先添加数据源。',
+
+    // Task Status
+    'export.status.idle': '空闲',
+    'export.status.running': '运行中',
+    'export.status.success': '成功',
+    'export.status.error': '错误',
+    'export.status.completed': '已完成',
+    'export.status.failed': '失败',
+
+    // Export Logs
+    'export.log.started': '导出任务已启动',
+    'export.log.fetching_toc': '正在获取目录结构...',
+    'export.log.toc_success': '成功获取 TOC，共 {count} 个节点',
+    'export.log.toc_failed': '获取 TOC 失败：{error}',
+    'export.log.creating_folders': '正在创建文件夹结构...',
+    'export.log.folders_created': '已创建 {count} 个文件夹',
+    'export.log.exporting_docs': '正在导出文档...',
+    'export.log.doc_success': '成功导出：{title}（ID：{id}）',
+    'export.log.doc_failed': '导出文档 {id} 失败：{error}',
+    'export.log.downloading_asset': '正在下载资源：{url}',
+    'export.log.asset_success': '资源下载成功',
+    'export.log.asset_failed': '资源下载失败：{error}',
+    'export.log.completed': '导出完成：成功 {success} 个，失败 {failed} 个',
+    'export.log.stopped': '导出任务因错误停止',
+    'export.log.retrying': '正在重试请求（第 {attempt}/{max} 次）...',
+
+    // Document Source
+    'doc.source.yuque': '语雀',
+    'doc.source.disconnected': '已断开',
+    'doc.source.info': '数据源：{source}',
+    'doc.metadata.yuque_id': '语雀文档 ID',
+    'doc.metadata.yuque_slug': '文档 Slug',
+    'doc.metadata.format': '格式',
+  }
+};
+
+const LanguageContext = createContext<{
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: (key: string) => string;
+}>({
+  language: 'en',
+  setLanguage: () => {},
+  t: (key) => key,
+});
+
+export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [language, setLanguage] = useState<Language>('en');
+
+  const t = (key: string) => {
+    // Direct dictionary lookup. 
+    // Since keys are strings like 'nav.dashboard', we do NOT split by '.'
+    const dict = translations[language] as Record<string, string>;
+    return dict[key] || key;
+  };
+
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
+
+export const useLanguage = () => useContext(LanguageContext);

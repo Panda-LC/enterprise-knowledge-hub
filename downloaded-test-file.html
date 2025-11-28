@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>发票云ISV接入指引</title>
+</head>
+<body>
+  **<font style="color:#DF2A3F;">首次对接请点击查看以下开发指引：</font>**[**<font style="color:#DF2A3F;">《首次对接旗舰版开收票API指引》</font>**](https://jdpiaozone.yuque.com/nbklz3/lx2u0d/bn2o6xdw0i8h4s17?singleDoc#)
+
+## 一、ISV+商户入驻开通流程（仅支持数电票）
+ISV入驻走线下流程拿到授权信息，使用授权进行接口对接测试，对接完成后可正式申请商户开通
+
+![画板](https://cdn.nlark.com/yuque/0/2023/jpeg/22190160/1689909373367-f8be916d-8e94-495d-b297-9d3568f99eca.jpeg)
+
+注：上图所示流程中扫码绑定税局账号环节需要关注金蝶发票云公众号，后续在公众号可完成税局登录、认证、账号管理等功能，如果ISV服务商不使用金蝶发票云公众号服务，则需调用相关接口自行维护相关功能。
+
+商户开通接口地址：[http://api-doc.piaozone.com/independent/#/share/project/api/detail?groupID=404&apiID=1956&projectHashKey=f8uQEnE76d92d3348113fe7ad08bddd034a70cec54b434b&shareType=project&shareCode=QbcNWh&shareToken=$2y$10$zkod0LermSTFURckp2dC9u.HyT8lj9mpiPgt.Xnuaztd8PsZnmENu&shareID=37](http://api-doc.piaozone.com/independent/#/share/project/api/detail?groupID=404&apiID=1956&projectHashKey=f8uQEnE76d92d3348113fe7ad08bddd034a70cec54b434b&shareType=project&shareCode=QbcNWh&shareToken=$2y$10$zkod0LermSTFURckp2dC9u.HyT8lj9mpiPgt.Xnuaztd8PsZnmENu&shareID=37)
+
+## 二、业务场景接入
+### 2.1 开票场景
+#### 2.1.1 蓝字开票场景
+1）  C端客户扫码开票场景（订单对接动态码）
+
+使用场景：商户需对接订单系统，发起开票时上传销售单生成二维码。
+
+适用行业：有订单系统对接能力，例如零售、餐饮等
+
+![画板](https://cdn.nlark.com/yuque/0/2023/jpeg/22190160/1686636843445-ae14e734-de39-4f8a-841d-1454ce9c4a0a.jpeg)
+
+2） 直连开票
+
+使用场景：商户有订单系统，可直接下推开票。
+
+适用行业：有订单系统对接能力和较强的开发能力，能将上游订单数据处理为开票数据，例如电商等。
+
+![画板](https://cdn.nlark.com/yuque/0/2023/jpeg/22190160/1686636927073-595715f2-d707-470a-bafb-475ab6f04b02.jpeg)
+
+3）开票申请单开票
+
+使用场景：商户有订单系统，下推开票申请单。
+
+适用行业：有订单系统对接能力和较强的开发能力。
+
+![画板](https://cdn.nlark.com/yuque/0/2023/jpeg/22190160/1689910265219-db7539bc-be8f-4c58-b05e-412cda718cc5.jpeg)
+
+#### 2.1.2  红字开票场景
+![画板](https://cdn.nlark.com/yuque/0/2023/jpeg/22190160/1686636929125-6a39b2a1-fdb7-49bd-9081-3a842e2c4b3f.jpeg)
+
+#### 2.1.3 发票管理操作
+电子发票文件下载、邮件推送等功能都提供接口调用，也可登录星瀚使用标准功能。
+
+发票统计及开票其他配置项可登录星瀚使用标准功能或嵌入对应页面。
+
+## 
+
+</body>
+</html>

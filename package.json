@@ -1,0 +1,48 @@
+{
+  "name": "enterprise-knowledge-hub",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:storage\" \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:client": "vite",
+    "dev:server": "node server/proxy.js",
+    "dev:storage": "node server/storage.js",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest --run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "lucide-react": "^0.554.0",
+    "multer": "^2.0.2",
+    "proper-lockfile": "^4.1.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.9.6",
+    "recharts": "^3.4.1",
+    "rehype-raw": "^7.0.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.1.2",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "fast-check": "^4.3.0",
+    "form-data": "^4.0.5",
+    "happy-dom": "^20.0.10",
+    "jsdom": "^27.2.0",
+    "node-fetch": "^3.3.2",
+    "supertest": "^7.1.4",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0",
+    "vitest": "^4.0.14"
+  }
+}
