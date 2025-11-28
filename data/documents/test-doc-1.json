@@ -1,0 +1,6 @@
+{
+  "id": "test-doc-1",
+  "title": "测试文档",
+  "body": "# 测试内容\n\n这是一个测试文档。",
+  "format": "markdown"
+}
