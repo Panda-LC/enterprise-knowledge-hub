@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, GitCommit, Globe, MessageSquare, Database, Download, RotateCcw, FileText, ChevronRight, Home, BookOpen, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, GitCommit, Globe, MessageSquare, Database, Download, RotateCcw, FileText, ChevronRight, Home, BookOpen, AlertCircle, Loader2, ChevronDown } from 'lucide-react';
 import { Button, Card, Badge } from './Common';
 import { LoadingSpinner } from './LoadingSpinner';
 import { useLanguage } from '../i18n';
@@ -47,6 +47,25 @@ export const DocumentDetail: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [showDownloadMenu, setShowDownloadMenu] = useState(false);
+  const downloadMenuRef = useRef<HTMLDivElement>(null);
+
+  // 点击外部关闭下拉菜单
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (downloadMenuRef.current && !downloadMenuRef.current.contains(event.target as Node)) {
+        setShowDownloadMenu(false);
+      }
+    };
+
+    if (showDownloadMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDownloadMenu]);
 
   // Helper function to rewrite image URLs to point to backend API
   const rewriteImageUrls = (content: string, sourceId: string, docId: string): string => {
@@ -346,16 +365,15 @@ export const DocumentDetail: React.FC = () => {
     loadDocument();
   }, [id, getItem, getPath, getConfig]);
 
-  // 简化的下载处理函数
-  const handleDownload = async () => {
+  // 下载处理函数 - 支持多种格式
+  const handleDownload = async (format: 'md' | 'html' | 'docx') => {
     if (!fileItem || !id) return;
     
     setIsDownloading(true);
     setDownloadError(null);
+    setShowDownloadMenu(false);
     
     try {
-      // 根据文档类型自动选择格式（MD 或 HTML）
-      const format = fileItem.type === FileType.MD ? 'md' : 'html';
       await StorageService.downloadDocumentFile(id, fileItem.title, format);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : '下载失败';
@@ -477,24 +495,66 @@ export const DocumentDetail: React.FC = () => {
             <div className="ml-auto flex gap-2 items-center">
               {isYuqueDoc && (
                 <>
-                  <Button 
-                    variant="outline"
-                    onClick={handleDownload}
-                    disabled={isDownloading}
-                    className="flex items-center gap-2"
-                  >
-                    {isDownloading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        下载中...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-4 w-4" />
-                        {t('doc.download')}
-                      </>
+                  {/* 下载按钮下拉菜单 */}
+                  <div className="relative" ref={downloadMenuRef}>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                      disabled={isDownloading}
+                      className="flex items-center gap-2"
+                    >
+                      {isDownloading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          下载中...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-4 w-4" />
+                          {t('doc.download')}
+                          <ChevronDown className="h-4 w-4 ml-1" />
+                        </>
+                      )}
+                    </Button>
+                    
+                    {/* 下拉菜单 */}
+                    {showDownloadMenu && !isDownloading && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
+                        <button
+                          onClick={() => handleDownload('md')}
+                          className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                        >
+                          <FileText className="h-4 w-4 text-slate-400" />
+                          <div>
+                            <div className="font-medium">Markdown</div>
+                            <div className="text-xs text-slate-500">.md 格式</div>
+                          </div>
+                        </button>
+                        
+                        <button
+                          onClick={() => handleDownload('html')}
+                          className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                        >
+                          <Globe className="h-4 w-4 text-slate-400" />
+                          <div>
+                            <div className="font-medium">HTML</div>
+                            <div className="text-xs text-slate-500">.html 格式</div>
+                          </div>
+                        </button>
+                        
+                        <button
+                          onClick={() => handleDownload('docx')}
+                          className="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                        >
+                          <FileText className="h-4 w-4 text-slate-400" />
+                          <div>
+                            <div className="font-medium">Word</div>
+                            <div className="text-xs text-slate-500">.docx 格式</div>
+                          </div>
+                        </button>
+                      </div>
                     )}
-                  </Button>
+                  </div>
                   
                   {downloadError && (
                     <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg border border-red-200">

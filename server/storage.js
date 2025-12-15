@@ -604,6 +604,167 @@ app.get('/api/storage/documents/:docId/download/pdf', async (req, res, next) => 
   }
 });
 
+/**
+ * POST /api/storage/documents/:docId/docx
+ * 保存 Word 文件
+ * 请求体: multipart/form-data（使用 multer 处理）
+ * 响应: { path: string } | { error: string }
+ */
+app.post('/api/storage/documents/:docId/docx', upload.single('file'), async (req, res, next) => {
+  try {
+    const { docId } = req.params;
+
+    // 验证文档 ID
+    if (!docId || typeof docId !== 'string') {
+      return res.status(400).json({
+        error: '文档 ID 无效',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // 验证文件是否上传
+    if (!req.file) {
+      return res.status(400).json({
+        error: '未上传文件',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // 调用 FileSystemService 保存 Word 文件
+    const filePath = await fileSystemService.saveDocxFile(docId, req.file.buffer);
+
+    // 返回成功响应
+    res.json({
+      success: true,
+      path: filePath,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    // 传递错误到错误处理中间件
+    next(error);
+  }
+});
+
+/**
+ * GET /api/storage/documents/:docId/docx
+ * 获取 Word 文件
+ * 响应: 二进制 Word 数据 | { error: string }
+ */
+app.get('/api/storage/documents/:docId/docx', async (req, res, next) => {
+  try {
+    const { docId } = req.params;
+
+    // 验证文档 ID
+    if (!docId || typeof docId !== 'string') {
+      return res.status(400).json({
+        error: '文档 ID 无效',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // 调用 FileSystemService 加载 Word 文件
+    const docxBuffer = await fileSystemService.loadDocxFile(docId);
+
+    // 如果文件不存在，返回 404
+    if (docxBuffer === null) {
+      return res.status(404).json({
+        error: 'Word 文件不存在',
+        docId,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // 设置响应头
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Length', docxBuffer.length);
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 缓存 1 年
+
+    // 返回 Word 内容
+    res.send(docxBuffer);
+  } catch (error) {
+    // 传递错误到错误处理中间件
+    next(error);
+  }
+});
+
+/**
+ * HEAD /api/storage/documents/:docId/docx
+ * 检查 Word 文件是否存在
+ * 响应: 200 (存在) | 404 (不存在)
+ */
+app.head('/api/storage/documents/:docId/docx', async (req, res, next) => {
+  try {
+    const { docId } = req.params;
+
+    // 验证文档 ID
+    if (!docId || typeof docId !== 'string') {
+      return res.status(400).end();
+    }
+
+    // 调用 FileSystemService 检查文件是否存在
+    const exists = await fileSystemService.docxFileExists(docId);
+
+    // 返回状态码
+    res.status(exists ? 200 : 404).end();
+  } catch (error) {
+    // 传递错误到错误处理中间件
+    next(error);
+  }
+});
+
+/**
+ * GET /api/storage/documents/:docId/download/docx
+ * 下载 Word 文件
+ * 响应: Word 文件下载（设置 Content-Disposition 头）
+ */
+app.get('/api/storage/documents/:docId/download/docx', async (req, res, next) => {
+  try {
+    const { docId } = req.params;
+
+    // 验证文档 ID
+    if (!docId || typeof docId !== 'string') {
+      return res.status(400).json({
+        error: '文档 ID 无效',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // 调用 FileSystemService 加载 Word 文件
+    const docxBuffer = await fileSystemService.loadDocxFile(docId);
+
+    // 如果文件不存在，返回 404
+    if (docxBuffer === null) {
+      return res.status(404).json({
+        error: 'Word 文件不存在',
+        docId,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // 获取文档信息以生成文件名
+    let filename = `${docId}.docx`;
+    try {
+      const docContent = await fileSystemService.loadDocument(docId);
+      if (docContent && docContent.title) {
+        filename = fileSystemService.sanitizeFilename(docContent.title, '.docx');
+      }
+    } catch (error) {
+      console.warn('[Storage] 无法获取文档标题，使用默认文件名:', error.message);
+    }
+
+    // 设置响应头
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+    res.setHeader('Content-Length', docxBuffer.length);
+
+    // 返回 Word 内容
+    res.send(docxBuffer);
+  } catch (error) {
+    // 传递错误到错误处理中间件
+    next(error);
+  }
+});
+
 // ==================== 资源 API 端点 ====================
 
 /**

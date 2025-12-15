@@ -25,6 +25,7 @@
 │   ├── HtmlGeneratorService.ts # HTML 生成服务
 │   ├── ImageEmbedderService.ts # 图片内嵌服务
 │   ├── PdfGeneratorService.ts  # PDF 生成服务
+│   ├── WordGeneratorService.ts # Word 文档生成服务
 │   ├── StorageService.ts       # 存储服务（API 客户端）
 │   └── YuqueApiService.ts      # 语雀 API 服务
 │
@@ -41,7 +42,7 @@
 │   ├── documents/              # 文档内容
 │   │   ├── {docId}.json       # 原始 JSON 数据
 │   │   ├── {docId}.html       # 包含内嵌图片的 HTML
-│   │   └── {docId}.pdf        # PDF 文件
+│   │   └── {docId}.docx       # Word 文件
 │   └── assets/                 # 资源文件
 │       └── {sourceId}/{docId}/{filename}
 │
@@ -55,11 +56,23 @@
 │   ├── html-to-pdf.js          # HTML 转 PDF 脚本
 │   └── yuque-export-integration.md
 │
+├── tasks/               # 测试和中间产物（不提交到 Git）
+│   ├── summaries/              # 修复总结文档
+│   ├── temp/                   # 临时文件
+│   ├── test-data/              # 测试数据
+│   ├── tests/                  # 测试脚本
+│   ├── debug-*.mjs             # 调试脚本
+│   ├── test-*.mjs              # 测试脚本
+│   ├── test-*.html             # 测试页面
+│   └── *.md                    # 任务文档
+│
+├── .gitignore           # Git 忽略配置
 ├── App.tsx              # 主应用组件
 ├── index.tsx            # 应用入口
 ├── i18n.tsx             # 国际化配置
 ├── types.ts             # TypeScript 类型定义
 ├── index.html           # HTML 模板
+├── metadata.json        # 项目元数据
 ├── package.json         # 依赖和脚本
 ├── tsconfig.json        # TypeScript 配置
 ├── vite.config.ts       # Vite 配置
@@ -145,6 +158,10 @@
    ├─ 保存 JSON（StorageService）
    ├─ 生成 HTML（HtmlGeneratorService）
    │   └─ 内嵌图片（ImageEmbedderService）
+   ├─ 生成 Word（WordGeneratorService）
+   │   ├─ 解析 HTML 为 Word 元素
+   │   ├─ 处理 Lake 格式
+   │   └─ 内嵌图片
    └─ 更新文件系统（FileSystemContext）
 ```
 
@@ -158,7 +175,7 @@
    ├─ 存在：直接下载
    └─ 不存在：动态生成
        ├─ HTML: generateHtmlOnTheFly()
-       └─ PDF: 返回错误（需预先生成）
+       └─ Word: generateWordOnTheFly()
    ↓
 4. 触发浏览器下载
 ```
@@ -168,6 +185,14 @@
 - 集成测试：API 端点和数据流
 - 组件测试：关键 UI 组件
 - 测试文件与源文件同目录
+- 测试脚本和中间产物：统一存放在 `tasks/` 文件夹
+
+## 项目清理规则
+- **核心代码**: 保持在项目根目录和对应的功能文件夹（components/、services/、contexts/、server/）
+- **测试和调试**: 所有测试脚本（test-*.mjs、debug-*.mjs）统一放在 `tasks/` 文件夹
+- **中间产物**: 修复总结、任务文档等临时文件放在 `tasks/` 文件夹
+- **数据文件**: 运行时数据存储在 `data/` 文件夹（已在 .gitignore 中）
+- **构建产物**: 构建输出存储在 `dist/` 文件夹（已在 .gitignore 中）
 
 ## API 端点设计
 
@@ -183,12 +208,12 @@
 - `POST /api/storage/documents/:docId/html` - 保存 HTML 文件
 - `GET /api/storage/documents/:docId/html` - 获取 HTML 文件
 - `HEAD /api/storage/documents/:docId/html` - 检查 HTML 文件是否存在
-- `POST /api/storage/documents/:docId/pdf` - 保存 PDF 文件
-- `GET /api/storage/documents/:docId/pdf` - 获取 PDF 文件
-- `HEAD /api/storage/documents/:docId/pdf` - 检查 PDF 文件是否存在
+- `POST /api/storage/documents/:docId/docx` - 保存 Word 文件
+- `GET /api/storage/documents/:docId/docx` - 获取 Word 文件
+- `HEAD /api/storage/documents/:docId/docx` - 检查 Word 文件是否存在
 - `GET /api/storage/documents/:docId/download` - 下载文档（Markdown/HTML）
 - `GET /api/storage/documents/:docId/download/html` - 下载 HTML 文件
-- `GET /api/storage/documents/:docId/download/pdf` - 下载 PDF 文件
+- `GET /api/storage/documents/:docId/download/docx` - 下载 Word 文件
 
 #### 资源管理
 - `POST /api/storage/assets/:sourceId/:docId/:filename` - 保存资源文件

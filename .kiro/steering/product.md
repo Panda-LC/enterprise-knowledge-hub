@@ -14,14 +14,21 @@ Enterprise Knowledge Hub (EKH) - 企业知识中心
 - **文档管理**: 支持 Markdown、HTML 和 Lake 格式，保持语雀文件夹层级
 - **本地文件存储**: 使用本地文件系统，突破浏览器存储限制，支持大文件和大量文档
 - **文档预览下载**: 支持预览和下载，图片资源本地化
-- **HTML/PDF 导出**: 自动生成包含内嵌图片的 HTML 和 PDF 文件
-- **图片内嵌**: 自动将图片转换为 Base64 Data URL，实现完全离线查看
+- **多格式导出**: 自动生成 HTML 和 Word 文件
+  - HTML: 包含内嵌图片，支持离线查看
+  - Word: 可编辑格式，兼容 Microsoft Word、WPS、LibreOffice
+- **Word 格式支持**: 生成符合 Office Open XML 标准的 .docx 文件
+  - 高度还原语雀原文的格式和样式
+  - 支持标题、段落、列表、表格、图片、代码块等元素
+  - 图片自动内嵌到文档，支持离线编辑
+  - 兼容多种 Word 软件
+- **图片内嵌**: 自动将图片转换为 Base64 Data URL（HTML）或内嵌到文档（Word）
   - 支持并发处理（最多 5 个并发）
   - 大文件警告（>10MB）和超时处理（30 秒）
   - 支持语雀 Lake 格式的 `<card>` 标签图片提取
   - 智能回退：本地优先，远程下载备用
 - **响应式样式**: 生成的 HTML 文件包含完整的响应式 CSS，适配不同屏幕尺寸
-- **格式选择下载**: 支持选择下载 Markdown、HTML 或 PDF 格式
+- **格式选择下载**: 支持选择下载 Markdown、HTML 或 Word 格式
   - 优先使用已生成的文件（缓存机制）
   - 支持动态生成（回退逻辑）
 - **错误处理**: 完善的 API 错误处理和自动重试机制
@@ -40,18 +47,29 @@ Enterprise Knowledge Hub (EKH) - 企业知识中心
 - RAG 性能监控
 
 ## 数据存储
-所有数据存储在项目根目录的 `data/` 文件夹：
+所有数据存储在项目根目录的 `data/` 文件夹（不提交到 Git）：
 - `data/configs/` - 配置文件（yuque.json、tasks.json、items.json）
 - `data/documents/` - 文档内容
   - `{docId}.json` - 原始 JSON 数据
   - `{docId}.html` - 包含内嵌图片的完整 HTML 文件
-  - `{docId}.pdf` - PDF 文件（需要 Chrome 或 wkhtmltopdf）
+  - `{docId}.docx` - Word 文件（可编辑格式）
 - `data/assets/` - 资源文件（图片、附件）
   - 按 `{sourceId}/{docId}/{filename}` 组织
+
+## 项目组织
+- **核心代码**: 应用入口、组件、服务、上下文管理
+- **配置文件**: package.json、tsconfig.json、vite.config.ts 等
+- **文档**: docs/ 文件夹存放项目文档和示例
+- **测试和调试**: tasks/ 文件夹存放测试脚本和中间产物（不提交到 Git）
+- **数据存储**: data/ 文件夹存放运行时数据（不提交到 Git）
+- **构建产物**: dist/ 文件夹存放构建输出（不提交到 Git）
 
 ## 用户体验
 - 响应式设计，支持桌面和移动端
 - 深色侧边栏导航
 - 实时任务状态更新
 - 详细的错误提示和日志
-- 离线查看：下载的 HTML 文件无需网络连接即可查看
+- 离线使用：
+  - HTML 文件无需网络连接即可查看
+  - Word 文件支持离线编辑
+  - 图片已内嵌到文档中

@@ -293,7 +293,7 @@ export class ImageEmbedderService {
    * @param docId 文档 ID
    * @returns Base64 Data URL
    */
-  private static async getImageBase64(
+  static async getImageBase64(
     url: string,
     sourceId: string,
     docId: string

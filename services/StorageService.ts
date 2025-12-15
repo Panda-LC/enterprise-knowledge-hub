@@ -1,6 +1,7 @@
 import { YuqueSourceConfig, ExportTask, FileSystemItem } from '../types';
 import { HtmlGeneratorService } from './HtmlGeneratorService';
 import { ImageEmbedderService } from './ImageEmbedderService';
+import { WordGeneratorService } from './WordGeneratorService';
 
 const BASE_URL = 'http://localhost:3002/api/storage';
 const MAX_RETRIES = 3;
@@ -236,17 +237,58 @@ export class StorageService {
     }
   }
 
-  // ============ HTML/PDF File Operations ============
+  // ============ HTML/PDF/Word File Operations ============
+
+  /**
+   * 保存 Word 文件
+   * @param docId 文档 ID
+   * @param buffer Word 文件 Buffer 或 Uint8Array
+   * @returns 文件路径
+   */
+  static async saveDocxFile(docId: string, buffer: Uint8Array | Buffer): Promise<string> {
+    try {
+      const url = `${BASE_URL}/documents/${docId}/docx`;
+      
+      // 创建 FormData 对象
+      const formData = new FormData();
+      
+      // 将 Buffer/Uint8Array 转换为 Blob
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      
+      // 添加文件到 FormData
+      formData.append('file', blob, `${docId}.docx`);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        // 不设置 Content-Type，让浏览器自动设置 multipart/form-data 边界
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.error || `HTTP ${response.status}: ${response.statusText}`
+        );
+      }
+
+      const data = await response.json();
+      return data.path || `data/documents/${docId}.docx`;
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : '未知错误';
+      console.error(`保存 Word 文件失败 (${docId}):`, errorMsg);
+      throw new Error(`保存 Word 文件失败: ${errorMsg}`);
+    }
+  }
 
   /**
    * 检查文件是否存在
    * @param docId 文档 ID
-   * @param format 文件格式（'html'、'pdf' 或 'md'）
+   * @param format 文件格式（'html'、'md' 或 'docx'）
    * @returns 文件是否存在
    */
   static async fileExists(
     docId: string,
-    format: 'html' | 'pdf' | 'md'
+    format: 'html' | 'md' | 'docx'
   ): Promise<boolean> {
     try {
       const url = `${BASE_URL}/documents/${docId}/${format}`;
@@ -259,15 +301,15 @@ export class StorageService {
   }
 
   /**
-   * 下载文档文件（HTML、PDF 或 Markdown）
+   * 下载文档文件（HTML、Markdown 或 Word）
    * @param docId 文档 ID
    * @param title 文档标题
-   * @param format 文件格式（'html'、'pdf' 或 'md'）
+   * @param format 文件格式（'html'、'md' 或 'docx'）
    */
   static async downloadDocumentFile(
     docId: string,
     title: string,
-    format: 'html' | 'pdf' | 'md'
+    format: 'html' | 'md' | 'docx'
   ): Promise<void> {
     try {
       console.log(`开始下载 ${format.toUpperCase()} 文件: ${docId}`);
@@ -298,10 +340,10 @@ export class StorageService {
           throw new Error(`下载失败: ${response.statusText}`);
         }
 
-        if (format === 'pdf') {
+        if (format === 'docx') {
           content = await response.blob();
-          contentType = 'application/pdf';
-          fileExtension = '.pdf';
+          contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          fileExtension = '.docx';
         } else {
           // HTML 文件直接返回文本内容
           content = await response.text();
@@ -317,15 +359,19 @@ export class StorageService {
           content = await this.generateHtmlOnTheFly(docId);
           contentType = 'text/html; charset=utf-8';
           fileExtension = '.html';
+        } else if (format === 'docx') {
+          // 动态生成 Word
+          content = await this.generateWordOnTheFly(docId);
+          contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          fileExtension = '.docx';
         } else {
-          // PDF 暂不支持动态生成，直接抛出错误
-          throw new Error('PDF 文件不存在，且无法动态生成');
+          throw new Error(`不支持的格式: ${format}`);
         }
       }
 
       // 4. 触发浏览器下载
       // 移除标题中已有的扩展名，避免重复
-      const titleWithoutExt = title.replace(/\.(html|pdf|md|markdown)$/i, '');
+      const titleWithoutExt = title.replace(/\.(html|pdf|md|markdown|docx)$/i, '');
       const safeTitle = this.sanitizeFilename(titleWithoutExt);
       const filename = `${safeTitle}${fileExtension}`;
 
@@ -383,25 +429,57 @@ export class StorageService {
   }
 
   /**
-   * 动态生成 PDF（从 HTML）
+   * 动态生成 Word（从 JSON）
    * @param docId 文档 ID
-   * @returns PDF Blob
+   * @returns Word Buffer
    */
-  private static async generatePdfOnTheFly(docId: string): Promise<Blob> {
+  private static async generateWordOnTheFly(docId: string): Promise<Blob> {
     try {
-      // 调用后端 API 动态生成 PDF
-      const url = `${BASE_URL}/documents/${docId}/generate/pdf`;
-      const response = await fetch(url, { method: 'POST' });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'PDF 生成失败' }));
-        throw new Error(errorData.error || 'PDF 生成失败');
+      console.log(`动态生成 Word 文档: ${docId}`);
+      
+      // 1. 加载文档内容
+      const doc = await this.loadDocumentContent(docId);
+      if (!doc) {
+        throw new Error('文档不存在');
       }
 
-      return await response.blob();
+      // 2. 获取文档的 Markdown 内容（body 字段）
+      const markdownContent = doc.body || '';
+      if (!markdownContent) {
+        throw new Error('文档内容为空');
+      }
+
+      // 3. 获取 sourceId（用于图片处理）
+      let sourceId = '';
+      try {
+        const items = await this.loadFileSystemItems();
+        const item = items.find(i => i.id === docId);
+        sourceId = item?.yuqueSourceId || '';
+      } catch (error) {
+        console.warn('无法获取 sourceId，将使用空字符串', error);
+      }
+
+      // 4. 使用 MarkdownWordGeneratorService 从 Markdown 生成 Word 文档
+      const { MarkdownWordGeneratorService } = await import('./MarkdownWordGeneratorService');
+      const wordGenerator = new MarkdownWordGeneratorService();
+      const buffer = await wordGenerator.generateWord(
+        docId,
+        markdownContent,
+        sourceId,
+        doc.title || '未命名文档',
+        {
+          embedImages: true, // 明确启用图片内嵌
+          timeout: 120000 // 2分钟超时
+        }
+      );
+
+      // 5. 返回 Blob
+      return new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      });
     } catch (error) {
-      console.error('动态生成 PDF 失败:', error);
-      throw new Error('PDF 功能暂未启用或生成失败。请下载 HTML 格式，或等待后续版本支持。');
+      console.error('动态生成 Word 失败:', error);
+      throw new Error(`动态生成 Word 失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   }
 

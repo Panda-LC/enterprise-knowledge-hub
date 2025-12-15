@@ -277,6 +277,42 @@ export class ExportService {
       // 不抛出异常，文档 JSON 已保存
     }
 
+    // Generate Word file (需求 5.1, 5.2, 5.3, 5.4)
+    try {
+      this.logCallback(`正在生成 Word 文件: ${doc.title}`, 'Info');
+      
+      // 使用 Markdown 内容生成 Word（body 字段）
+      const markdownContent = doc.body || '';
+      
+      if (markdownContent) {
+        const { MarkdownWordGeneratorService } = await import('./MarkdownWordGeneratorService');
+        const wordGenerator = new MarkdownWordGeneratorService();
+        const wordBuffer = await wordGenerator.generateWord(
+          docId,
+          markdownContent,
+          this.sourceId,
+          doc.title,
+          {
+            embedImages: true, // 明确启用图片内嵌
+            timeout: 120000 // 2分钟超时（处理大文档）
+          }
+        );
+        
+        // 保存 Word 文件到后端
+        await StorageService.saveDocxFile(docId, wordBuffer);
+        
+        this.logCallback(`Word 文件已生成: ${doc.title}`, 'Success');
+      } else {
+        this.logCallback(`跳过 Word 生成（无内容）: ${doc.title}`, 'Info');
+      }
+    } catch (wordError) {
+      // Word 生成失败，记录错误但不影响文档保存（需求 5.2）
+      const wordErrorMsg = wordError instanceof Error ? wordError.message : '未知错误';
+      this.logCallback(`Word 生成失败 ${doc.title}: ${wordErrorMsg}`, 'Error');
+      console.error(`Word generation failed for ${doc.title}:`, wordError);
+      // 不抛出异常，继续处理其他格式（需求 5.2）
+    }
+
     // Check if document already exists in FileSystemContext
     const existingDoc = this.fileSystemContext.getItem(docId);
     if (existingDoc) {
@@ -420,6 +456,24 @@ export class ExportService {
         const url = match[1];
         if (this.isAssetUrl(url)) {
           urls.push(url);
+        }
+      }
+      
+      // Extract URLs from Lake format <card> tags
+      const cardRegex = /<card[^>]+value=["']data:([^"']+)["']/g;
+      while ((match = cardRegex.exec(content)) !== null) {
+        try {
+          // Decode the URL-encoded JSON data
+          const jsonStr = decodeURIComponent(match[1]);
+          const cardData = JSON.parse(jsonStr);
+          
+          // Extract image URL from card data
+          if (cardData.src && this.isExternalUrl(cardData.src)) {
+            urls.push(cardData.src);
+          }
+        } catch (error) {
+          // Ignore parsing errors for individual cards
+          console.warn('Failed to parse card data:', error);
         }
       }
     }

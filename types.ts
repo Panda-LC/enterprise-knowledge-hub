@@ -1,6 +1,5 @@
 
 export enum FileType {
-  PDF = 'PDF',
   DOCX = 'DOCX',
   MD = 'MD',
   HTML = 'HTML',

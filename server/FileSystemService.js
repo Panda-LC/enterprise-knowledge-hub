@@ -637,12 +637,112 @@ class FileSystemService {
   }
 
   /**
+   * 保存 Word 文件
+   * 将 Word 内容保存到 data/documents/{docId}.docx 文件
+   * @param {string} docId - 文档 ID
+   * @param {Buffer} docxBuffer - Word 内容（二进制数据）
+   * @returns {Promise<string>} 文件路径
+   */
+  async saveDocxFile(docId, docxBuffer) {
+    const filePath = path.join(this.documentsDir, `${docId}.docx`);
+    
+    // 使用文件锁保护写入操作
+    return await this.withLock(filePath, async () => {
+      try {
+        console.log(`[FileSystemService] 开始保存 Word 文件: ${docId}`);
+        
+        // 创建备份
+        await this.createBackup(filePath);
+        
+        // 写入文件（二进制数据）
+        await fs.writeFile(filePath, docxBuffer);
+        console.log(`[FileSystemService] Word 文件保存成功: ${filePath}`);
+        
+        // 删除备份
+        await this.deleteBackup(filePath);
+        
+        return filePath;
+      } catch (error) {
+        console.error(`[FileSystemService] 保存 Word 文件失败 (${docId}):`, error);
+        
+        // 尝试从备份恢复
+        const restored = await this.restoreFromBackup(filePath);
+        if (restored) {
+          console.log(`[FileSystemService] 已从备份恢复 Word 文件: ${docId}`);
+        }
+        
+        throw new Error(`保存 Word 文件失败: ${error.message}`);
+      }
+    });
+  }
+
+  /**
+   * 加载 Word 文件
+   * 从 data/documents/{docId}.docx 文件加载 Word 内容
+   * @param {string} docId - 文档 ID
+   * @returns {Promise<Buffer|null>} Word 内容（二进制数据），如果文件不存在则返回 null
+   */
+  async loadDocxFile(docId) {
+    const filePath = path.join(this.documentsDir, `${docId}.docx`);
+    
+    try {
+      console.log(`[FileSystemService] 开始加载 Word 文件: ${docId}`);
+      
+      // 读取文件内容（二进制数据）
+      const docxBuffer = await fs.readFile(filePath);
+      console.log(`[FileSystemService] Word 文件加载成功: ${docId}`);
+      
+      return docxBuffer;
+    } catch (error) {
+      // 如果文件不存在，返回 null
+      if (error.code === 'ENOENT') {
+        console.log(`[FileSystemService] Word 文件不存在: ${docId}`);
+        return null;
+      }
+      
+      // 其他错误
+      console.error(`[FileSystemService] 加载 Word 文件失败 (${docId}):`, error);
+      throw new Error(`加载 Word 文件失败: ${error.message}`);
+    }
+  }
+
+  /**
+   * 检查 Word 文件是否存在
+   * @param {string} docId - 文档 ID
+   * @returns {Promise<boolean>} 文件是否存在
+   */
+  async docxFileExists(docId) {
+    const filePath = path.join(this.documentsDir, `${docId}.docx`);
+    
+    try {
+      await fs.access(filePath);
+      return true;
+    } catch (error) {
+      if (error.code === 'ENOENT') {
+        return false;
+      }
+      throw error;
+    }
+  }
+
+  /**
    * 删除文件（用于更新时清理旧文件）
    * @param {string} docId - 文档 ID
-   * @param {string} fileType - 文件类型（'html' 或 'pdf'）
+   * @param {string} fileType - 文件类型（'html'、'pdf' 或 'docx'）
    */
   async deleteFile(docId, fileType) {
-    const extension = fileType === 'pdf' ? '.pdf' : '.html';
+    let extension;
+    switch (fileType) {
+      case 'pdf':
+        extension = '.pdf';
+        break;
+      case 'docx':
+        extension = '.docx';
+        break;
+      default:
+        extension = '.html';
+    }
+    
     const filePath = path.join(this.documentsDir, `${docId}${extension}`);
     
     try {

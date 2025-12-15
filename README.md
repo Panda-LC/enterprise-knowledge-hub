@@ -10,10 +10,12 @@
 - ✅ **文档管理**: 支持 Markdown 和 HTML 格式文档，保持与语雀一致的文件夹层级
 - ✅ **本地文件存储**: 使用本地文件系统存储数据，突破浏览器存储限制
 - ✅ **文档预览下载**: 支持文档内容预览和下载，图片资源本地化
-- ✅ **HTML/PDF 导出**: 导出时自动生成包含内嵌图片的 HTML 和 PDF 文件，支持离线查看
-- ✅ **图片内嵌**: 自动将图片转换为 Base64 Data URL，实现完全离线的文档查看
+- ✅ **多格式导出**: 导出时自动生成 HTML 和 Word 文件，支持离线查看和编辑
+- ✅ **Word 格式支持**: 生成符合 Office Open XML 标准的 .docx 文件，兼容 Microsoft Word、WPS 和 LibreOffice
+- ✅ **图片内嵌**: 自动将图片转换为 Base64 Data URL（HTML）或内嵌到文档（Word），实现完全离线查看
 - ✅ **响应式样式**: 生成的 HTML 文件包含响应式 CSS，适配不同屏幕尺寸
-- ✅ **格式选择下载**: 支持选择下载 HTML 或 PDF 格式，优先使用已生成的文件
+- ✅ **格式选择下载**: 支持选择下载 Markdown、HTML、PDF 或 Word 格式，优先使用已生成的文件
+- ✅ **格式保真**: Word 文档高度还原语雀原文的格式和样式（标题、列表、表格、代码块等）
 - ✅ **错误处理**: 完善的 API 错误处理和自动重试机制
 - ✅ **实时日志**: 详细的任务执行日志，支持成功/错误/警告级别
 - ✅ **国际化**: 支持中英文切换
@@ -86,14 +88,18 @@ npm run dev
 1. 在"知识资产库"中找到您的文档
 2. 点击文档进入详情页
 3. 点击"下载"按钮，选择格式：
-   - **HTML**: 包含内嵌图片的完整 HTML 文件，可离线查看
-   - **PDF**: 专业格式的 PDF 文档（需要安装 Chrome 或 wkhtmltopdf）
+   - **Markdown (.md)**: 纯文本格式，适合版本控制和编辑
+   - **HTML (.html)**: 包含内嵌图片的完整 HTML 文件，可离线查看
+   - **PDF (.pdf)**: 专业格式的 PDF 文档（需要安装 Chrome 或 wkhtmltopdf）
+   - **Word (.docx)**: Microsoft Word 格式，可在 Word、WPS、LibreOffice 中编辑
 
 **特性说明**：
-- 导出时自动生成 `.json`、`.html` 和 `.pdf` 三种格式
+- 导出时自动生成 `.json`、`.html`、`.pdf` 和 `.docx` 四种格式
 - HTML 文件中的图片已转换为 Base64，无需网络连接即可查看
+- Word 文件中的图片已内嵌到文档，支持离线编辑
 - 下载时优先使用已生成的文件，无需等待重新生成
-- 文档更新后会自动重新生成 HTML 和 PDF 文件
+- 文档更新后会自动重新生成所有格式的文件
+- Word 文档高度还原语雀原文的格式和样式
 
 ## 📦 项目结构
 
@@ -155,6 +161,7 @@ npm run preview
 - **路由**: React Router 7.9.6
 - **UI**: Tailwind CSS + Lucide Icons
 - **Markdown**: react-markdown + remark-gfm
+- **Word 生成**: docx 8.5.0 + htmlparser2 9.1.0
 - **测试**: Vitest + Testing Library
 - **后端**: Express (代理服务器)
 
@@ -172,6 +179,11 @@ npm run preview
 - [本地文件存储设计](.kiro/specs/local-file-storage/design.md)
 - [HTML 下载与内嵌图片需求](.kiro/specs/html-download-with-embedded-images/requirements.md)
 - [HTML 下载与内嵌图片设计](.kiro/specs/html-download-with-embedded-images/design.md)
+- [Word 格式导出需求](.kiro/specs/word-export-support/requirements.md)
+- [Word 格式导出设计](.kiro/specs/word-export-support/design.md)
+
+### 使用指南
+- [Word 导出使用指南](docs/word-export-guide.md)
 
 ### 数据管理
 - [数据目录结构说明](data/README.md)
@@ -193,6 +205,7 @@ npm run preview
 - 文档内容：`data/documents/{docId}.json`（原始数据）
 - HTML 文件：`data/documents/{docId}.html`（包含内嵌图片）
 - PDF 文件：`data/documents/{docId}.pdf`（专业格式）
+- Word 文件：`data/documents/{docId}.docx`（可编辑格式）
 - 资源文件：`data/assets/{sourceId}/{docId}/{filename}`
 
 数据文件特点：
@@ -200,7 +213,7 @@ npm run preview
 - 文件锁保证并发安全
 - 支持大文件和大量文档
 - 易于备份和迁移
-- 多格式支持（JSON、HTML、PDF）
+- 多格式支持（JSON、HTML、PDF、Word）
 
 ### 错误处理
 
@@ -211,7 +224,7 @@ npm run preview
 
 ## 💡 使用示例
 
-### 示例 1: 导出语雀文档并下载 HTML
+### 示例 1: 导出语雀文档并下载多种格式
 
 ```bash
 # 1. 启动应用
@@ -229,9 +242,12 @@ npm run dev
 # 访问 http://localhost:3000/#/documents
 # 点击文档进入详情页
 
-# 5. 下载 HTML 文件
-# 点击"下载"按钮，选择"HTML"
-# 下载的文件包含所有内嵌图片，可离线查看
+# 5. 下载文档（支持多种格式）
+# 点击"下载"按钮，选择格式：
+# - Markdown (.md): 纯文本格式
+# - HTML (.html): 包含内嵌图片，可离线查看
+# - PDF (.pdf): 专业格式
+# - Word (.docx): 可在 Word/WPS/LibreOffice 中编辑
 ```
 
 ### 示例 2: 生成 PDF 文档
@@ -259,14 +275,18 @@ ls -la data/documents/
 # yuque_source_timestamp_docid.json  # 原始 JSON 数据
 # yuque_source_timestamp_docid.html  # 包含内嵌图片的 HTML
 # yuque_source_timestamp_docid.pdf   # PDF 文件
+# yuque_source_timestamp_docid.docx  # Word 文件
 
 # 直接在浏览器中打开 HTML 文件
 open data/documents/yuque_source_timestamp_docid.html
+
+# 在 Word 中打开 Word 文件
+open data/documents/yuque_source_timestamp_docid.docx
 ```
 
 ### 示例 4: 图片内嵌原理
 
-导出的 HTML 文件中，图片 URL 会被转换为 Base64 Data URL：
+**HTML 格式**：图片 URL 会被转换为 Base64 Data URL
 
 ```html
 <!-- 原始图片 URL -->
@@ -276,9 +296,37 @@ open data/documents/yuque_source_timestamp_docid.html
 <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..." />
 ```
 
-这样 HTML 文件可以完全离线查看，无需网络连接。
+**Word 格式**：图片会被内嵌到 Word 文档中
 
-### 示例 5: 自定义响应式样式
+- 图片以二进制形式存储在 .docx 文件内部
+- 保留原始尺寸比例和对齐方式
+- 支持 PNG、JPEG、GIF 等常见格式
+- 无需网络连接即可查看和编辑
+
+这样 HTML 和 Word 文件都可以完全离线使用，无需网络连接。
+
+### 示例 5: Word 文档格式保真
+
+Word 文档高度还原语雀原文的格式和样式：
+
+**支持的格式元素**：
+- 标题（H1-H6）→ Word 标题样式
+- 粗体、斜体、下划线、删除线 → 文本样式
+- 有序列表、无序列表 → Word 列表
+- 表格 → Word 表格（保留边框和对齐）
+- 代码块 → 等宽字体
+- 引用块 → 缩进样式
+- 超链接 → 可点击的链接
+- 图片 → 内嵌图片（保留尺寸）
+- 分隔线 → 水平线
+
+**兼容性**：
+- Microsoft Word（Windows/Mac）
+- WPS Office
+- LibreOffice Writer
+- Google Docs（导入后）
+
+### 示例 6: 自定义响应式样式
 
 生成的 HTML 文件包含响应式 CSS 样式：
 
@@ -428,6 +476,6 @@ MIT License
 
 ---
 
-**开发状态**: ✅ 语雀集成已完成 | ✅ 本地文件存储已完成 | ✅ HTML/PDF 导出已完成  
-**版本**: v2.1.0  
-**最后更新**: 2024年1月
+**开发状态**: ✅ 语雀集成已完成 | ✅ 本地文件存储已完成 | ✅ HTML/PDF 导出已完成 | ✅ Word 导出已完成  
+**版本**: v2.2.0  
+**最后更新**: 2024年12月

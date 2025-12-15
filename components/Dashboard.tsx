@@ -24,7 +24,7 @@ const CHANNEL_DISTRIBUTION = [
 ];
 
 const TOP_DOCS = [
-  { id: 1, title: 'Product_Pricing_2024.pdf', calls: 1245, relevance: '98%' },
+  { id: 1, title: 'Product_Pricing_2024.docx', calls: 1245, relevance: '98%' },
   { id: 2, title: 'Troubleshooting_Guide_v2.md', calls: 892, relevance: '94%' },
   { id: 3, title: 'Refund_Policy_Global.docx', calls: 756, relevance: '91%' },
   { id: 4, title: 'API_Authentication_Spec.html', calls: 620, relevance: '88%' },

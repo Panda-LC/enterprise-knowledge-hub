@@ -175,7 +175,6 @@ export const AssetsLibrary: React.FC = () => {
 
   const getFileIcon = (type: FileType) => {
     switch(type) {
-      case FileType.PDF: return <FileText className="h-5 w-5 text-red-500" />;
       case FileType.DOCX: return <FileText className="h-5 w-5 text-blue-500" />;
       case FileType.MD: return <FileCode className="h-5 w-5 text-slate-800" />;
       case FileType.HTML: return <Globe className="h-5 w-5 text-orange-500" />;
